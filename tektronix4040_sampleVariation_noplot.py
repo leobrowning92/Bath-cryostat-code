@@ -74,7 +74,7 @@ class tektronixDMM4040(object):
         self.send_command("SYST:REM\n")
         self.get_error()
 
-    def collect_data(self,v=True,sample_count=10,integration_time=0.4):
+    def get_dataset(self,v=True,sample_count=10,integration_time=0.4):
         """
         sample counts can be up to 5000
         integration times are in ms and can ONLY be the following:
@@ -124,5 +124,5 @@ class tektronixDMM4040(object):
 if __name__ == "__main__":
     dmm=tektronixDMM4040("10.30.128.63")
     dmm.setup_fast()
-    dmm.collect_data(sample_count=10,integration_time=20)
+    dmm.get_dataset(sample_count=10,integration_time=20)
     dmm.close()
