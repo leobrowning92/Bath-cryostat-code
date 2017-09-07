@@ -21,7 +21,7 @@ def get_error():
         print(value)
         return(True)
 
-def collect(ip="10.30.128.63", show=False, save=True, fname="test.csv"):
+def collect(ip="10.30.128.63", show=False, save=True, fname="test.csv",delay=1):
     multimeter_address = ip
     #setup telnet
     multimeter = telnetlib.Telnet()
@@ -52,7 +52,7 @@ def collect(ip="10.30.128.63", show=False, save=True, fname="test.csv"):
 
     def update(x):
         multimeter.write(("MEAS:RES?\n").encode("ascii"))
-        time.sleep(1)
+        time.sleep(x)
         value= multimeter.read_eager()
         get_error()
         #print(value)
@@ -94,7 +94,7 @@ def collect(ip="10.30.128.63", show=False, save=True, fname="test.csv"):
     else:
         while True:
             try:
-                update(1)
+                update(delay)
                 print("step")
             except Exception as e:
                 print("meter error",get_error())
@@ -110,7 +110,8 @@ def collect(ip="10.30.128.63", show=False, save=True, fname="test.csv"):
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser( formatter_class=argparse.RawDescriptionHelpFormatter, description="Measure the resistance over time of a sample conected to to a DMM4040 or equivalent")
-    parser.add_argument("--ip", type=str,help="the ip address of the multimeter")
     parser.add_argument("save",type=str,help="the filename to save as")
     args = parser.parse_args()
+    parser.add_argument("--ip", type=str,help="the ip address of the multimeter")
+    parser.add_argument("--delay", type=str,help="the time delay between measurements")
     collect(ip=args.ip,fname=args.save)
