@@ -11,7 +11,7 @@ import numpy as np
 #Might have to change the IP to closer to your computer IP.
 
 
-def get_error():
+def get_error(multimeter):
     multimeter.write(("SYST:ERR?\n").encode('ascii'))
     time.sleep(0.2)
     value= multimeter.read_eager()
@@ -21,7 +21,7 @@ def get_error():
         print(value)
         return(True)
 
-def collect(ip="10.30.128.63", show=False, save=True, fname="test.csv",delay=1):
+def collect(ip="10.30.128.63", show=False, save=True, fname="test.csv",delay=1,v=True):
     multimeter_address = ip
     #setup telnet
     multimeter = telnetlib.Telnet()
@@ -34,12 +34,6 @@ def collect(ip="10.30.128.63", show=False, save=True, fname="test.csv",delay=1):
     multimeter.write(("conf:res\n").encode('ascii'))
     multimeter.write(("syst:beep:state off\n").encode('ascii'))
 
-
-
-
-
-
-
     start=time.time()
     voltage=[0]
     t=[0]
@@ -50,11 +44,12 @@ def collect(ip="10.30.128.63", show=False, save=True, fname="test.csv",delay=1):
     print('start :  {:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))
     print(start)
 
-    def update(x):
+    def update(delay):
         multimeter.write(("MEAS:RES?\n").encode("ascii"))
-        time.sleep(x)
+
         value= multimeter.read_eager()
-        get_error()
+        time.sleep(delay)
+        #get_error(multimeter)
         #print(value)
         value = value.decode("ascii")
         value = re.search(r'\d.{13}', value)
@@ -72,7 +67,8 @@ def collect(ip="10.30.128.63", show=False, save=True, fname="test.csv",delay=1):
                 dt=time.time()-start
                 voltage.append(v)
                 t.append(dt)
-                print(v,dt)
+                if v:
+                    print(v,dt)
         except Exception as e:
             print("couldnt append data values:\n",e)
         #print(voltage,t)
@@ -95,9 +91,10 @@ def collect(ip="10.30.128.63", show=False, save=True, fname="test.csv",delay=1):
         while True:
             try:
                 update(delay)
-                print("step")
+                if v:
+                    print("step")
             except Exception as e:
-                print("meter error",get_error())
+                print("meter error",get_error(multimeter))
                 print(e)
                 break
     print('end   :  {:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))
@@ -113,6 +110,8 @@ if __name__=="__main__":
     parser.add_argument("save",type=str,help="the filename to save as")
 
     parser.add_argument("--ip", type=str,help="the ip address of the multimeter")
-    parser.add_argument("--delay", type=str,help="the time delay between measurements")
+    parser.add_argument("--delay", type=int,help="the time delay between measurements")
+    parser.add_argument("--show", action="store_true",help="display graph in real time")
+    parser.add_argument("-v", "--verbose", action="store_true",default=False,help="print values to stdout for each measurement")
     args = parser.parse_args()
-    collect(ip=args.ip,fname=args.save)
+    collect(ip=args.ip,fname=args.save,v=args.verbose,show=args.show,delay=args.delay)
