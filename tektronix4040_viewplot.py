@@ -20,7 +20,30 @@ def get_error():
     if value !=b'+0,"No error"\r\n' and value != b'':
         print(value)
         return(True)
+def update(multimeter, start, delay):
+    multimeter.write(("MEAS:RES?\n").encode("ascii"))
+    time.sleep(delay)
+    value= multimeter.read_eager()
+    get_error()
+    #print(value)
+    value = value.decode("ascii")
+    value = re.search(r'\d.{13}', value)
 
+    # print(type(float(value)))
+    try:
+        if value==None:
+            #checks for an unmatching string, usually ''
+            pass
+        elif float(value.group(0))>1e37:
+            pass
+        else:
+            #print(value.group(0),time.time()-start)
+            v=float(value.group(0))
+            dt=time.time()-start
+            print(v,dt)
+            return [v,dt]
+    except Exception as e:
+        print("couldnt append data values:\n",e)
 def collect(ip="10.30.128.63", show=False, save=True, fname="test.csv",delay=1):
     multimeter_address = ip
     #setup telnet
@@ -34,78 +57,38 @@ def collect(ip="10.30.128.63", show=False, save=True, fname="test.csv",delay=1):
     multimeter.write(("conf:res\n").encode('ascii'))
     multimeter.write(("syst:beep:state off\n").encode('ascii'))
 
-
-
-
-
-
-
     start=time.time()
-    voltage=[0]
-    t=[0]
-
-    if show:
-        fig=plt.figure()
-        line,=plt.plot(t,voltage,'ro-')
     print('start :  {:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))
     print(start)
 
-    def update(x):
-        multimeter.write(("MEAS:RES?\n").encode("ascii"))
-        time.sleep(x)
-        value= multimeter.read_eager()
-        get_error()
-        #print(value)
-        value = value.decode("ascii")
-        value = re.search(r'\d.{13}', value)
-
-        # print(type(float(value)))
-        try:
-            if value==None:
-                #checks for an unmatching string, usually ''
-                pass
-            elif float(value.group(0))>1e37:
-                pass
-            else:
-                #print(value.group(0),time.time()-start)
-                v=float(value.group(0))
-                dt=time.time()-start
-                voltage.append(v)
-                t.append(dt)
-                print(v,dt)
-        except Exception as e:
-            print("couldnt append data values:\n",e)
-        #print(voltage,t)
-        if show:
-            line.set_data(t,voltage)
-            plt.xlim(0, max(t)*1.1)
-            plt.ylim(0, max(voltage)*1.1)
-            return line,
-
 
 
 
     if show:
+        plt.axis()
+        plt.ion()
+    t=[]
+    resistance=[]
+    while True:
         try:
-            line_ani = animation.FuncAnimation(fig, update, interval=1000)
-            plt.show()
+            value=update(delay)
+            print("step")
+
+            if value[0]:#checks to make sure update returned a real value
+                t.append(value[1])
+                resistance.append(value[0])
+            if not t and show:#checks to make sure there are values in t
+                plt.scatter(t, resistance)
+                plt.pause(0.05)
         except KeyboardInterrupt:
             multimeter.close()
-    else:
-        while True:
-            try:
-                update(delay)
-                print("step")
-            except Exception as e:
-                print("meter error",get_error())
-                print(e)
-                break
+
+
     print('end   :  {:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))
     #closes the multimeter
     multimeter.close()
     if save:
-        data=np.array([voltage[1:],t[1:]]).T
-
+        data=np.array([resistance,t]).T
         np.savetxt(fname, data,header="R,t",delimiter=',')
 
 if __name__=="__main__":
