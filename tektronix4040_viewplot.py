@@ -22,7 +22,7 @@ def get_error():
         print(value)
         return(True)
 
-multimeter_address ="10.30.128.63"
+multimeter_address ="10.30.128.98"
 #setup telnet
 multimeter = telnetlib.Telnet()
 #initialize the multimeter with the given settings
@@ -40,13 +40,16 @@ start=time.time()
 voltage=[0]
 t=[0]
 
-line,=plt.plot(t,voltage,'ro')
+line,=plt.plot(t,voltage,'r-')
 print('start :  {:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))
 print(start)
 
 def update(x):
+    if t[0]==0 and len(t)>1:
+        t[0]=t[1]
+        voltage[0]=voltage[1]
     multimeter.write(("MEAS:RES?\n").encode("ascii"))
-    time.sleep(0.1)
+    time.sleep(1)
     value= multimeter.read_eager()
     get_error()
     #print(value)
@@ -68,8 +71,8 @@ def update(x):
         print("couldnt append data values:\n",e)
     #print(voltage,t)
     line.set_data(t,voltage)
-    plt.xlim(0, max(t)*1.1)
-    plt.ylim(0, max(voltage)*1.1)
+    plt.xlim(min(t)*0.99, max(t)*1.01)
+    plt.ylim(min(voltage)*0.9, max(voltage)*1.1)
     return line,
 
 
