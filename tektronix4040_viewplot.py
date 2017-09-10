@@ -20,12 +20,12 @@ def get_error(multimeter):
     if value !=b'+0,"No error"\r\n' and value != b'':
         print(value)
         return(True)
-        
+
 def update(multimeter, start, delay):
     multimeter.write(("MEAS:RES?\n").encode("ascii"))
     time.sleep(delay)
     value= multimeter.read_eager()
-    get_error()
+    get_error(multimeter)
     #print(value)
     value = value.decode("ascii")
     value = re.search(r'\d.{13}', value)
@@ -47,48 +47,52 @@ def update(multimeter, start, delay):
         print("couldnt append data values:\n",e)
 
 def collect(ip="10.30.128.63", show=False, save=True, fname="test.csv",delay=1,v=True):
-    multimeter_address = ip
-    #setup telnet
-    multimeter = telnetlib.Telnet()
-    #initialize the multimeter with the given settings
-    multimeter.open(multimeter_address,port=3490,timeout=3)
-    #set the multimeter into remote mode
-    multimeter.write(("SYST:REM\n").encode('ascii'))
-    multimeter.write(("*CLS\n").encode('ascii'))
-    multimeter.write(("disp off\n").encode('ascii'))
-    multimeter.write(("conf:res\n").encode('ascii'))
-    multimeter.write(("syst:beep:state off\n").encode('ascii'))
+    try:
+        multimeter_address = ip
+        #setup telnet
+        multimeter = telnetlib.Telnet()
+        #initialize the multimeter with the given settings
+        multimeter.open(multimeter_address,port=3490,timeout=3)
+        #set the multimeter into remote mode
+        multimeter.write(("SYST:REM\n").encode('ascii'))
+        multimeter.write(("*CLS\n").encode('ascii'))
+        multimeter.write(("disp off\n").encode('ascii'))
+        multimeter.write(("conf:res\n").encode('ascii'))
+        multimeter.write(("syst:beep:state off\n").encode('ascii'))
 
-    start=time.time()
-    print('start :  {:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))
-    print(start)
+        start=time.time()
+        print('start :  {:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))
+        print(start)
 
 
-    if show:
-        plt.axis()
-        plt.ion()
-    t=[]
-    resistance=[]
-    while True:
-        try:
-            value=update(delay)
+        if show:
+            plt.axis()
+            plt.ion()
+            plt.show()
+
+        t=[]
+        resistance=[]
+        while True:
+            value=update(multimeter,start,delay)
             print("step")
 
             if value[0]:#checks to make sure update returned a real value
                 t.append(value[1])
                 resistance.append(value[0])
-            if not t and show:#checks to make sure there are values in t
-                plt.scatter(t, resistance)
+            if  t and show:#checks to make sure there are values in t
+                plt.plot(t, resistance,'r.-')
                 plt.pause(0.05)
-        except KeyboardInterrupt:
-            multimeter.close()
 
-    print('end   :  {:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))
-    #closes the multimeter
-    multimeter.close()
-    if save:
-        data=np.array([resistance,t]).T
-        np.savetxt(fname, data,header="R,t",delimiter=',')
+
+        print('end   :  {:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()))
+        #closes the multimeter
+
+    except KeyboardInterrupt:
+        multimeter.close()
+        if save:
+            data=np.array([resistance,t]).T
+            np.savetxt(fname, data,header="R,t",delimiter=',')
+            print("saved as {}".format(fname))
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser( formatter_class=argparse.RawDescriptionHelpFormatter, description="Measure the resistance over time of a sample conected to to a DMM4040 or equivalent")
