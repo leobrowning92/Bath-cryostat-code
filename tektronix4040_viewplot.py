@@ -104,3 +104,12 @@ if __name__=="__main__":
     parser.add_argument("-v", "--verbose", action="store_true",default=False,help="print values to stdout for each measurement")
     args = parser.parse_args()
     collect(ip=args.ip,fname=args.save,v=args.verbose,show=args.show,delay=args.delay)
+
+# Need to handle this error preventing file saving
+# Traceback (most recent call last):
+#   File "tektronix4040_viewplot.py", line 106, in <module>
+#     collect(ip=args.ip,fname=args.save,v=args.verbose,show=args.show,delay=args.
+# delay)
+#   File "tektronix4040_viewplot.py", line 79, in collect
+#     if value[0]:#checks to make sure update returned a real value
+# TypeError: 'NoneType' object has no attribute '__getitem__'
