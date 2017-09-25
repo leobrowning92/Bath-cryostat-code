@@ -20,11 +20,12 @@ def get_error(multimeter):
     if value !=b'+0,"No error"\r\n' and value != b'':
         print(value)
         return(True)
-        
+
 def update(multimeter, start, delay):
     multimeter.write(("MEAS:RES?\n").encode("ascii"))
     time.sleep(delay)
     value= multimeter.read_eager()
+    dt=time.time()-start
     get_error()
     #print(value)
     value = value.decode("ascii")
@@ -40,7 +41,6 @@ def update(multimeter, start, delay):
         else:
             #print(value.group(0),time.time()-start)
             v=float(value.group(0))
-            dt=time.time()-start
             print(v,dt)
             return [v,dt]
     except Exception as e:
@@ -51,7 +51,7 @@ def collect(ip="10.30.128.63", show=False, save=True, fname="test.csv",delay=1,v
     #setup telnet
     multimeter = telnetlib.Telnet()
     #initialize the multimeter with the given settings
-    multimeter.open(multimeter_address,port=3490,timeout=3)
+    multimeter.open(multimeter_address,port=3490,timeout=5)
     #set the multimeter into remote mode
     multimeter.write(("SYST:REM\n").encode('ascii'))
     multimeter.write(("*CLS\n").encode('ascii'))
